@@ -6,7 +6,7 @@ from datetime import datetime
 st.title("📊 APA Rating History Cleaner")
 
 # User input for target calculation date
-target_date = st.date_input("📅 Calculate durations until:", value=datetime.today())
+target_date = st.date_input("📅 Calculate 'Service Duration & Time in Grade' until:", value=datetime.today())
 
 # File upload
 uploaded_file = st.file_uploader("📁 Upload APA Rating Excel File", type="xlsx")
@@ -16,16 +16,34 @@ if uploaded_file is not None:
         # Read starting from row 5 (index 4)
         df = pd.read_excel(uploaded_file, header=4, engine="openpyxl")
 
-        # Set proper column headers (A to R)
+        # Set full column headers (A–V)
         df.columns = [
-            "First Level Unit Name", "First Level Unit Head of Unit", "User/Employee ID", "Nationality",
-            "Birth Date", "Age", "Gender", "Grade", "Designation", "Department", "Division",
-            "Reporting Manager", "Hire Date", "Yrs of Service as Staff", "Grade Entry Date",
-            "Time in Grade", "Last Date Worked", "Form Name", "Blank1", "Blank2", "Blank3", "Blank4"
+            "First Level Unit Name",                  # A
+            "First Level Unit Head of Unit",          # B
+            "User/Employee ID",                       # C
+            "Nationality",                            # D
+            "Birth Date",                             # E
+            "Age",                                     # F
+            "Gender",                                  # G
+            "Grade",                                   # H
+            "Designation",                             # I
+            "Department",                              # J
+            "Division",                                # K
+            "Reporting Manager",                       # L
+            "Employment Details Hire Date",            # M
+            "Yrs of Service as Staff",                 # N
+            "Grade Entry Date",                        # O
+            "Time in Grade",                           # P
+            "Employment Details Last Date Worked",     # Q
+            "Form Name",                               # R
+            "2021",                                     # S
+            "2022",                                     # T
+            "2023",                                     # U
+            "Blank"                                     # V
         ]
 
-        # Drop fully blank column (assumed to be 'Blank1' = Column S)
-        df.drop(columns=["Blank1"], inplace=True)
+        # Drop the fully blank column (Column V)
+        df.drop(columns=["Blank"], inplace=True)
 
         # Round Age to 1 decimal
         df["Age"] = pd.to_numeric(df["Age"], errors="coerce").round(1)
@@ -34,23 +52,22 @@ if uploaded_file is not None:
         df["First Level Unit Name"] = df["First Level Unit Name"].ffill()
         df["First Level Unit Head of Unit"] = df["First Level Unit Head of Unit"].ffill()
 
-        # Convert Hire Date and Grade Entry Date to datetime
-        df["Hire Date"] = pd.to_datetime(df["Hire Date"], errors="coerce")
-        df["Grade Entry Date"] = pd.to_datetime(df["Grade Entry Date"], errors="coerce")
+        # Convert Hire Date to datetime
+        df["Employment Details Hire Date"] = pd.to_datetime(df["Employment Details Hire Date"], errors="coerce")
 
         # Duration calculator
         def calculate_duration(from_date):
             if pd.isnull(from_date):
                 return ""
-            delta = target_date - from_date.date()  # Ensure correct type
+            delta = target_date - from_date.date()
             years = delta.days // 365
             months = (delta.days % 365) // 30
             days = (delta.days % 365) % 30
             return f"{years} Years {months} Months {days} Days"
 
-        # Calculate service & time in grade
-        df["Calculated Service Duration"] = df["Hire Date"].apply(calculate_duration)
-        df["Calculated Time in Grade"] = df["Grade Entry Date"].apply(calculate_duration)
+        # Calculated columns
+        df["Calculated Service Duration"] = df["Employment Details Hire Date"].apply(calculate_duration)
+        df["Calculated Time in Grade"] = df["Time in Grade"]
 
         # Preview
         st.subheader("🔍 Cleaned Preview")
